@@ -22,6 +22,7 @@ class CalState(enum.Enum):
     """Possible states of the calendar view"""
     MONTHLY = 1
     DAILY = 2
+    WEEKLY = 3
 
 
 class Status(enum.Enum):
@@ -44,7 +45,7 @@ class Frequency(enum.Enum):
 class Task:
     """Tasks created by the user"""
 
-    def __init__(self, item_id, name, status, timer, privacy, year=0, month=0, day=0, calendar_number=None):
+    def __init__(self, item_id, name, status, timer, privacy, year=0, month=0, day=0, calendar_number=None, notion_id=None, project_name=None, notion_status_options=None, current_notion_status=None, is_header=False):
         self.item_id = item_id
         self.name = name
         self.status = status
@@ -54,6 +55,11 @@ class Task:
         self.month = month
         self.day = day
         self.calendar_number = calendar_number
+        self.notion_id = notion_id
+        self.project_name = project_name
+        self.notion_status_options = notion_status_options or []
+        self.current_notion_status = current_notion_status
+        self.is_header = is_header
 
 
 class Event:
@@ -70,7 +76,7 @@ class UserEvent(Event):
     """Events created by the user"""
 
     def __init__(self, item_id, year, month, day, name, repetition, frequency, status, privacy,
-                                                    calendar_number=None, hour=None, minute=None, rrule=None, exdate=None):
+                                                    calendar_number=None, hour=None, minute=None, end_hour=None, end_minute=None, rrule=None, exdate=None):
         super().__init__(year, month, day, name)
         self.item_id = item_id
         self.repetition = repetition
@@ -80,6 +86,8 @@ class UserEvent(Event):
         self.calendar_number = calendar_number
         self.hour = hour
         self.minute = minute
+        self.end_hour = end_hour
+        self.end_minute = end_minute
         self.rrule = rrule
         self.exdate = exdate
 
@@ -228,6 +236,17 @@ class Collection:
                 and event.month == screen.month
                 and event.day == screen.day):
                 events_of_the_day.add_item(event)
+        
+        # Log filtering for debugging ICS events
+        if len(self.items) > 0 and hasattr(self, 'items') and len(self.items) > 0:
+            try:
+                from calcure.debug_logger import get_debug_logger
+                logger = get_debug_logger()
+                if len(events_of_the_day.items) > 0:
+                    logger.logger.debug(f"filter_events_that_day: Found {len(events_of_the_day.items)} events for {screen.year}/{screen.month}/{screen.day} out of {len(self.items)} total events")
+            except:
+                pass
+        
         return events_of_the_day
 
     def filter_events_that_month(self, screen):

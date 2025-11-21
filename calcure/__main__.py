@@ -8,6 +8,12 @@ import getopt
 import sys
 import importlib
 import threading
+import datetime
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables for live loaders
+load_dotenv()
 
 from calcure.calendars import Calendar
 from calcure.errors import Error
@@ -22,11 +28,15 @@ from calcure.loaders import *
 from calcure.data import *
 from calcure.controls import *
 from calcure.moon import get_moon_phase
+from calcure.debug_logger import init_debug_logger, get_debug_logger
 
 
 # Initialise config:
 cf = Config()
 error = Error(cf.LOG_FILE)
+# Initialize debug logger in calcure directory (current working directory)
+debug_log_file = Path.cwd() / "calcure_debug.log"
+debug_logger = init_debug_logger(str(debug_log_file))
 
 # Language:
 if cf.LANG == "fr":
@@ -239,14 +249,86 @@ class JournalView(View):
         self.screen = screen
 
     def render(self):
-        """Render the list of tasks"""
+        """Render the list of tasks with project grouping"""
         if not self.user_tasks.items and not self.user_ics_tasks.items and cf.SHOW_NOTHING_PLANNED:
             self.display_line(self.y, self.x, MSG_TS_NOTHING, Color.UNIMPORTANT)
-        for index, task in enumerate(self.user_tasks.items):
-            task_view = TaskView(self.stdscr, self.y, self.x, task, self.screen)
-            task_view.render()
-            if self.screen.selection_mode and self.screen.state == AppState.JOURNAL:
-                self.display_line(self.y, self.x, str(index + 1), Color.ACTIVE_PANE)
+            return
+        
+        # Separate local tasks from Notion tasks (always maintain separation)
+        local_tasks = []
+        notion_tasks = []
+        
+        for task in self.user_tasks.items:
+            # Skip header tasks in separation
+            if hasattr(task, 'is_header') and task.is_header:
+                # Headers belong to notion tasks section
+                notion_tasks.append(task)
+            elif hasattr(task, 'notion_id') and task.notion_id:
+                notion_tasks.append(task)
+            else:
+                local_tasks.append(task)
+        
+        current_project = None
+        task_index = 0
+        
+        # Always render local tasks section header (even if empty)
+        self.display_line(self.y, self.x, "━━━ Local Tasks ━━━", Color.TITLE, True)
+        self.y += 1
+        
+        if local_tasks:
+            for task in local_tasks:
+                task_view = TaskView(self.stdscr, self.y, self.x, task, self.screen)
+                task_view.render()
+                # Always show task numbers in journal view when in selection mode
+                if self.screen.selection_mode and self.screen.state == AppState.JOURNAL:
+                    # Display number at the start of the line (x position)
+                    self.display_line(self.y, self.x, str(task_index), Color.ACTIVE_PANE)
+                self.y += 1
+                task_index += 1
+        else:
+            # Show empty message for local tasks
+            self.display_line(self.y, self.x, "  (no local tasks)", Color.UNIMPORTANT)
+            self.y += 1
+        
+        # Add spacing between sections
+        self.y += 1
+        
+        # Always render Notion tasks section header
+        self.display_line(self.y, self.x, "━━━ Notion Tasks ━━━", Color.TITLE, True)
+        self.y += 1
+        
+        if notion_tasks:
+            for task in notion_tasks:
+                # Skip header tasks in selection count but display them
+                if hasattr(task, 'is_header') and task.is_header:
+                    # Display project header
+                    project_name = task.project_name if hasattr(task, 'project_name') and task.project_name else "No Project"
+                    header_text = f"  ━━ {project_name} ━━"
+                    self.display_line(self.y, self.x, header_text, Color.TITLE, True)
+                    self.y += 1
+                    current_project = task.project_name if hasattr(task, 'project_name') else None
+                    continue
+                
+                # Check if project changed (for non-header tasks)
+                if hasattr(task, 'project_name') and task.project_name != current_project:
+                    current_project = task.project_name if task.project_name else "No Project"
+                    project_name = task.project_name if task.project_name else "No Project"
+                    header_text = f"  ━━ {project_name} ━━"
+                    self.display_line(self.y, self.x, header_text, Color.TITLE, True)
+                    self.y += 1
+                
+                # Render Notion task
+                task_view = TaskView(self.stdscr, self.y, self.x, task, self.screen)
+                task_view.render()
+                # Always show task numbers in journal view when in selection mode
+                if self.screen.selection_mode and self.screen.state == AppState.JOURNAL:
+                    # Display number at the start of the line (x position)
+                    self.display_line(self.y, self.x, str(task_index), Color.ACTIVE_PANE)
+                self.y += 1
+                task_index += 1
+        else:
+            # Show empty message for Notion tasks
+            self.display_line(self.y, self.x, "  (no Notion tasks)", Color.UNIMPORTANT)
             self.y += 1
 
         self.y += 1
@@ -433,6 +515,19 @@ class DailyView(View):
         self.repeated_ics_events = repeated_ics_events.filter_events_that_day(screen)
         self.user_events = user_events.filter_events_that_day(screen)
         self.user_ics_events = user_ics_events.filter_events_that_day(screen)
+        
+        # Debug logging for ICS events filtering
+        try:
+            from calcure.debug_logger import get_debug_logger
+            logger = get_debug_logger()
+            if len(user_ics_events.items) > 0:
+                logger.logger.debug(f"DailyView: Filtering ICS events for {screen.year}/{screen.month}/{screen.day}: {len(user_ics_events.items)} total ICS events, {len(self.user_ics_events.items)} match this day")
+                if len(self.user_ics_events.items) > 0:
+                    for ev in self.user_ics_events.items[:3]:  # Log first 3 matching events
+                        logger.logger.debug(f"  Matching ICS event: '{ev.name}' on {ev.year}/{ev.month}/{ev.day}")
+        except:
+            pass
+        
         self.user_ics_events.items = sorted(self.user_ics_events.items, key=lambda x: (x.hour is None, x.hour))
         self.holidays = holidays.filter_events_that_day(screen)
         self.birthdays = birthdays.filter_events_that_day(screen)
@@ -458,8 +553,11 @@ class DailyView(View):
                 user_event_view = UserEventView(self.stdscr, self.y + index, self.x, event, self.screen)
                 user_event_view.render()
 
+                # Only show numbers for events, not tasks (tasks are handled in JournalView)
                 if self.screen.selection_mode and self.is_selection_day and self.screen.state == AppState.CALENDAR:
-                    self.display_line(self.y + index, self.x, str(index + self.index_offset + 1), Color.ACTIVE_PANE)
+                    # Only show numbers for user events (not ICS events which are read-only)
+                    if event in self.user_events.items:
+                        self.display_line(self.y + index, self.x, str(index + self.index_offset + 1), Color.ACTIVE_PANE)
             index += 1
 
         # Show repeated user events and events from ics:
@@ -596,6 +694,13 @@ class FooterView(View):
         """Render this view on the screen"""
         if not cf.SHOW_KEYBINDINGS: return
         clear_line(self.stdscr, self.screen.y_max - 1)
+        
+        # Show refresh indicator if reloading
+        if self.screen.is_reloading:
+            refresh_indicator = "⟳ Reloading data..."
+            self.display_line(self.screen.y_max - 1, 0, refresh_indicator, Color.IMPORTANT)
+            return
+        
         if self.screen.state == AppState.CALENDAR:
             if self.screen.calendar_state == CalState.MONTHLY:
                 hint = CALENDAR_HINT
@@ -617,15 +722,39 @@ class ErrorView(View):
 
     def render(self):
         """Render this view on the screen"""
+        # Always show context-sensitive help (even when no error)
         if self.error.has_occurred:
             clear_line(self.stdscr, self.screen.y_max - 2)
 
             # Depending on error type, display different messages:
             if self.error.number_of_errors > 1 or "ERROR" in self.error.type:
                 self.display_line(self.screen.y_max - 2, 0, MSG_ERRORS, Color.IMPORTANT)
+                self.error.clear_buffer()
+                return
+        
+        # Always show help text (even when no error)
+        if self.screen.state == AppState.JOURNAL:
+            if self.screen.selection_mode:
+                help_text = "Select task then: h/i=high, l=low, u=reset, d/v=mark done, x=delete, e/r=edit, s=status, f/F=deadline, t/T=timer, .=privacy, m=move"
             else:
-                self.display_line(self.screen.y_max - 2, 0, MSG_INPUT, Color.HINTS)
-
+                help_text = "t=add task | d/v=mark done (press d/v then task #) | x=delete (press x then task #) | h/i=important | c=change status | Q=refresh | ?=help | q=quit"
+        elif self.screen.state == AppState.CALENDAR:
+            if self.screen.selection_mode:
+                help_text = "Select event then: h/i=high, l=low, u=reset, d=done, x=delete, e/r=rename, m/M=move, .=privacy"
+            else:
+                help_text = "a=add event | A=recurring event | t=add task | n/p=next/prev | w=weekly | v=monthly | Q=refresh | ?=help | q=quit"
+        else:
+            help_text = ""
+        
+        # Truncate if too long
+        if help_text:
+            max_len = self.screen.x_max - 1
+            if len(help_text) > max_len:
+                help_text = help_text[:max_len-3] + "..."
+            clear_line(self.stdscr, self.screen.y_max - 2)
+            self.display_line(self.screen.y_max - 2, 0, help_text, Color.HINTS)
+        
+        if self.error.has_occurred:
             self.error.clear_buffer()
 
 
@@ -897,6 +1026,99 @@ class MonthlyScreenView(View):
             calendar_border_view.render()
 
 
+class WeeklyScreenView(View):
+    """Weekly view showing next 7 days of events"""
+
+    def __init__(self, stdscr, y, x, weather, user_events, user_ics_events, holidays, birthdays, user_tasks, user_ics_tasks, screen):
+        super().__init__(stdscr, y, x)
+        self.weather = weather
+        self.user_events = user_events
+        self.user_ics_events = user_ics_events
+        self.holidays = holidays
+        self.birthdays = birthdays
+        self.user_tasks = user_tasks
+        self.user_ics_tasks = user_ics_tasks
+        self.screen = screen
+
+    def render(self):
+        """Render weekly view showing next 7 days"""
+        self.screen.currently_drawn = AppState.CALENDAR
+        if self.screen.x_max < 6 or self.screen.y_max < 3:
+            return
+
+        calendar = Calendar(cf.START_WEEK_DAY - 1, cf.USE_PERSIAN_CALENDAR)
+        
+        # Calculate current week start (Monday or Sunday based on START_WEEK_DAY)
+        current_date = self.screen.date
+        days_since_week_start = (current_date.weekday() - (cf.START_WEEK_DAY - 1)) % 7
+        week_start_date = current_date - datetime.timedelta(days=days_since_week_start)
+        
+        # Calculate week number
+        week_num = calendar.week_number(week_start_date.year, week_start_date.month, week_start_date.day)
+        
+        # Header with week number
+        month_names = MONTHS_PERSIAN if cf.USE_PERSIAN_CALENDAR else MONTHS
+        week_string = f"Week {week_num} - {month_names[week_start_date.month-1]} {week_start_date.year}"
+        
+        header_view = HeaderView(self.stdscr, 0, 0, week_string, self.weather, self.screen)
+        header_view.render()
+
+        # Display day names header
+        day_names = DAYS_PERSIAN if cf.USE_PERSIAN_CALENDAR else DAYS
+        shift = cf.START_WEEK_DAY - 1
+        x_cell = self.screen.x_max // 7
+        for i in range(7):
+            day_number = (i + shift) % 7
+            day_name = day_names[day_number][:3]
+            x_pos = i * x_cell
+            color = Color.WEEKEND_NAMES if (day_number + 1) in cf.WEEKEND_DAYS else Color.DAY_NAMES
+            self.display_line(1, x_pos, day_name, color, cf.BOLD_DAY_NAMES)
+
+        # Display 7 days
+        repeated_user_events = RepeatedEvents(self.user_events, cf.USE_PERSIAN_CALENDAR, self.screen.year)
+        repeated_ics_events = RepeatedEvents(self.user_ics_events, cf.USE_PERSIAN_CALENDAR, self.screen.year)
+        
+        # Calculate week start date based on current screen date (for navigation)
+        current_screen_date = datetime.date(self.screen.year, self.screen.month, self.screen.day)
+        days_since_week_start = (current_screen_date.weekday() - (cf.START_WEEK_DAY - 1)) % 7
+        week_start_date = current_screen_date - datetime.timedelta(days=days_since_week_start)
+        
+        y_start = 2
+        
+        for day_idx in range(7):
+            x_pos = day_idx * x_cell
+            
+            # Calculate date for this day
+            day_date = week_start_date + datetime.timedelta(days=day_idx)
+            day_color = Color.TODAY if day_date == self.screen.today else (Color.WEEKENDS if (day_date.weekday() + 1) in cf.WEEKEND_DAYS else Color.DAYS)
+            
+            # Display date number with month/day format
+            date_str = f"{day_date.day}/{day_date.month}"
+            if day_date == self.screen.today:
+                date_str += cf.TODAY_ICON
+            self.display_line(y_start, x_pos, date_str, day_color, cf.BOLD_TODAY if day_date == self.screen.today else False)
+            
+            # Temporarily set screen date for this day to render events correctly
+            temp_day = self.screen.day
+            temp_month = self.screen.month
+            temp_year = self.screen.year
+            self.screen.day = day_date.day
+            self.screen.month = day_date.month
+            self.screen.year = day_date.year
+            
+            # Display events for this day
+            daily_view = DailyView(self.stdscr, y_start + 1, x_pos, repeated_user_events,
+                                   repeated_ics_events, self.user_events, self.user_ics_events,
+                                   self.holidays, self.birthdays, self.user_tasks, self.user_ics_tasks,
+                                   self.screen, 0, day_date == current_screen_date)
+            daily_view.render()
+            
+            # Restore screen date
+            self.screen.day = temp_day
+            self.screen.month = temp_month
+            self.screen.year = temp_year
+
+
 class JournalScreenView(View):
     def __init__(self, stdscr, y, x, weather, user_tasks, user_ics_tasks, screen):
         super().__init__(stdscr, y, x)
@@ -1020,6 +1242,10 @@ class HelpScreenView(View):
 
 def main(stdscr) -> None:
     """Main function that runs and switches screens"""
+    try:
+        debug_logger.log_event("MAIN_START", "Main function started")
+    except:
+        pass  # Debug logger might not be initialized yet
 
     # Load the weather:
     weather = Weather(cf.WEATHER_CITY, cf.WEATHER_METRIC_UNITS)
@@ -1037,17 +1263,82 @@ def main(stdscr) -> None:
     holiday_loader = HolidayLoader(cf)
 
     # Load the data:
-    user_events = event_loader_csv.load()
-    user_tasks = task_loader_csv.load()
-    user_ics_events = event_loader_ics.load()
-    user_ics_tasks = task_loader_ics.load()
-    holidays = holiday_loader.load()
-    birthdays = birthday_loader.load()
+    debug_logger.log_event("LOAD_START", "Starting data load")
+    try:
+        user_events = event_loader_csv.load()
+        debug_logger.log_data_load("EventLoaderCSV", len(user_events.items), 
+                                   f"File: {cf.EVENTS_FILE}")
+        for i, event in enumerate(user_events.items[:5]):  # Log first 5
+            debug_logger.logger.debug(f"  Event {i+1}: {event.name} on {event.year}/{event.month}/{event.day}")
+    except Exception as e:
+        debug_logger.log_error("LOAD_ERROR", f"Failed to load CSV events: {e}", e)
+        user_events = Events()
+    
+    try:
+        user_tasks = task_loader_csv.load()
+        debug_logger.log_data_load("TaskLoaderCSV", len(user_tasks.items),
+                                   f"File: {cf.TASKS_FILE}")
+    except Exception as e:
+        debug_logger.log_error("LOAD_ERROR", f"Failed to load CSV tasks: {e}", e)
+        user_tasks = Tasks()
+    
+    try:
+        user_ics_events = event_loader_ics.load()
+        debug_logger.log_data_load("EventLoaderICS", len(user_ics_events.items),
+                                   f"Files: {cf.ICS_EVENT_FILES}")
+    except Exception as e:
+        debug_logger.log_error("LOAD_ERROR", f"Failed to load ICS events: {e}", e)
+        user_ics_events = Events()
+    
+    try:
+        user_ics_tasks = task_loader_ics.load()
+        debug_logger.log_data_load("TaskLoaderICS", len(user_ics_tasks.items),
+                                   f"Files: {cf.ICS_TASK_FILES}")
+    except Exception as e:
+        debug_logger.log_error("LOAD_ERROR", f"Failed to load ICS tasks: {e}", e)
+        user_ics_tasks = Tasks()
+    
+    try:
+        holidays = holiday_loader.load()
+        debug_logger.log_data_load("HolidayLoader", len(holidays.items))
+    except Exception as e:
+        debug_logger.log_error("LOAD_ERROR", f"Failed to load holidays: {e}", e)
+        holidays = Events()
+    
+    try:
+        birthdays = birthday_loader.load()
+        debug_logger.log_data_load("BirthdayLoader", len(birthdays.items))
+    except Exception as e:
+        debug_logger.log_error("LOAD_ERROR", f"Failed to load birthdays: {e}", e)
+        birthdays = Events()
+
+    # Load live data (Notion):
+    try:
+        from calcure.loaders_live import NotionTaskLoader
+        notion_loader = NotionTaskLoader(cf)
+        live_tasks = notion_loader.load()
+        debug_logger.log_data_load("NotionTaskLoader", len(live_tasks))
+        for task in live_tasks:
+            # Ensure unique ID for live tasks to avoid conflict with CSV tasks
+            task.item_id = user_tasks.generate_id()
+            user_tasks.add_item(task)
+    except Exception as e:
+        debug_logger.log_error("LOAD_ERROR", f"Failed to load Notion tasks: {e}", e)
+        live_tasks = []
+    
+    debug_logger.log_event("LOAD_COMPLETE", 
+                          f"Total events: {len(user_events.items)}, "
+                          f"ICS events: {len(user_ics_events.items)}, "
+                          f"Total tasks: {len(user_tasks.items)}")
 
     # Initialise savers and importers:
     event_saver_csv = EventSaverCSV(user_events, cf)
     task_saver_csv = TaskSaverCSV(user_tasks, cf)
     importer = Importer(user_tasks, user_events, cf)
+    
+    # Live Savers
+    from calcure.loaders_live import NotionTaskSaver
+    notion_saver = NotionTaskSaver()
 
     read_items_from_user_arguments(screen, user_tasks, user_events, task_saver_csv, event_saver_csv)
 
@@ -1063,6 +1354,8 @@ def main(stdscr) -> None:
                                             holidays, birthdays, user_tasks, user_ics_tasks, screen)
     daily_screen_view = DailyScreenView(stdscr, 0, 0, weather, user_events, user_ics_events,
                                         holidays, birthdays, user_tasks, user_ics_tasks, screen)
+    weekly_screen_view = WeeklyScreenView(stdscr, 0, 0, weather, user_events, user_ics_events,
+                                          holidays, birthdays, user_tasks, user_ics_tasks, screen)
     journal_screen_view = JournalScreenView(stdscr, 0, 0, weather, user_tasks, user_ics_tasks, screen)
     help_screen_view = HelpScreenView(stdscr, 0, 0, screen)
     welcome_screen_view = WelcomeScreenView(stdscr, 0, 0, screen)
@@ -1078,54 +1371,95 @@ def main(stdscr) -> None:
         control_welcome_screen(stdscr, screen)
 
     # Running different screens depending on the state:
-    while screen.state != AppState.EXIT:
-        stdscr.clear()
-        app_view.fill_background()
+    try:
+        while screen.state != AppState.EXIT:
+            # Handle terminal resize on Windows
+            try:
+                curses.resize_term(0, 0)  # Force terminal size refresh
+            except:
+                pass
+            
+            stdscr.clear()
+            app_view.fill_background()
 
-        # Calculate screen refresh rate:
-        curses.halfdelay(200)
-        if user_tasks.has_active_timer and screen.state == AppState.JOURNAL:
-            curses.halfdelay(cf.REFRESH_INTERVAL * 10)
+            # Calculate screen refresh rate:
+            curses.halfdelay(200)
+            if user_tasks.has_active_timer and screen.state == AppState.JOURNAL:
+                curses.halfdelay(cf.REFRESH_INTERVAL * 10)
 
-        # Calendar screens:
-        if screen.state == AppState.CALENDAR:
-
-            if screen.calendar_state == CalState.MONTHLY:
-                monthly_screen_view.render()
-            else:
-                daily_screen_view.render()
-
-            if screen.split:
-                journal_screen_view.render()
-                separator_view.render()
-            footer_view.render()
-            error_view.render()
-
-            if screen.calendar_state == CalState.MONTHLY:
-                control_monthly_screen(stdscr, screen, user_events, importer)
-            else:
-                control_daily_screen(stdscr, screen, user_events, importer)
-
-        # Journal screen:
-        elif screen.state == AppState.JOURNAL:
-            if screen.split:
+            # Calendar screens:
+            if screen.state == AppState.CALENDAR:
                 if screen.calendar_state == CalState.MONTHLY:
                     monthly_screen_view.render()
+                elif screen.calendar_state == CalState.WEEKLY:
+                    weekly_screen_view.render()
                 else:
                     daily_screen_view.render()
-                separator_view.render()
-            journal_screen_view.render()
-            footer_view.render()
-            error_view.render()
-            control_journal_screen(stdscr, screen, user_tasks, importer)
 
-        # Help screen:
-        elif screen.state == AppState.HELP:
-            help_screen_view.render()
-            control_help_screen(stdscr, screen)
+                if screen.split:
+                    journal_screen_view.render()
+                    separator_view.render()
+                footer_view.render()
+                error_view.render()
 
-        else:
-            break
+                # Unified control: handles both calendar and journal actions
+                # Get key once and share between calendar and journal controls
+                try:
+                    screen.key = stdscr.getkey()
+                except curses.error as e:
+                    # Timeout or no input - continue loop
+                    # Only log input timeouts occasionally to reduce log spam (every 100th timeout)
+                    if not hasattr(screen, '_timeout_count'):
+                        screen._timeout_count = 0
+                    screen._timeout_count += 1
+                    if screen._timeout_count % 100 == 0:
+                        debug_logger.logger.debug(f"Input timeout/no input (logged every 100th): {e}")
+                    screen.key = None
+                    continue
+                except Exception as e:
+                    # Catch any other input errors
+                    debug_logger.log_error("INPUT_ERROR", f"Error getting input: {e}", e)
+                    screen.key = None
+                    continue
+                
+                # First check if it's a journal/task key (t, or task selection keys)
+                # If so, handle in journal screen only
+                journal_keys = ['t', 'T', 'h', 'l', 'v', 'u', 'i', 's', 'S', 'd', 'x', 'e', 'r', 'c', 'm', '.', 'f', 'F']
+                # Note: 'a' and 'A' are handled by calendar controls (a=event, A=recurring event)
+                is_journal_key = screen.key in journal_keys
+                
+                if is_journal_key:
+                    # Handle journal/task keys
+                    control_journal_screen(stdscr, screen, user_tasks, importer, notion_saver)
+                else:
+                    # Handle calendar keys
+                    if screen.calendar_state == CalState.MONTHLY:
+                        control_monthly_screen(stdscr, screen, user_events, importer)
+                    elif screen.calendar_state == CalState.WEEKLY:
+                        control_weekly_screen(stdscr, screen, user_events, importer)
+                    else:
+                        control_daily_screen(stdscr, screen, user_events, importer)
+
+            # Journal screen:
+            elif screen.state == AppState.JOURNAL:
+                if screen.split:
+                    if screen.calendar_state == CalState.MONTHLY:
+                        monthly_screen_view.render()
+                    else:
+                        daily_screen_view.render()
+                    separator_view.render()
+                journal_screen_view.render()
+                footer_view.render()
+                error_view.render()
+                control_journal_screen(stdscr, screen, user_tasks, importer, notion_saver)
+
+            # Help screen:
+            elif screen.state == AppState.HELP:
+                help_screen_view.render()
+                control_help_screen(stdscr, screen)
+
+            else:
+                break
 
         # If something has been changed, save the data:
         if user_events.changed:
@@ -1133,16 +1467,74 @@ def main(stdscr) -> None:
             screen.refresh_now = True
         if user_tasks.changed:
             task_saver_csv.save()
+            # Also save deleted Notion task IDs to persist across restarts
+            deleted_notion_file = Path(cf.config_folder) / "deleted_notion_tasks.txt"
+            deleted_notion_ids = set()
+            for task in user_tasks.items:
+                if hasattr(task, 'notion_id') and task.notion_id and hasattr(task, '_deleted') and task._deleted:
+                    deleted_notion_ids.add(task.notion_id)
+            # Also check existing file for IDs that were deleted but task no longer in list
+            if deleted_notion_file.exists():
+                try:
+                    with open(deleted_notion_file, "r", encoding="utf-8") as f:
+                        existing_deleted = set(line.strip() for line in f if line.strip())
+                        deleted_notion_ids.update(existing_deleted)
+                except Exception:
+                    pass
+            # Write back all deleted IDs
+            try:
+                with open(deleted_notion_file, "w", encoding="utf-8") as f:
+                    for task_id in deleted_notion_ids:
+                        f.write(f"{task_id}\n")
+            except Exception:
+                pass
             screen.refresh_now = True
 
         # If needed, reload the data:
-        if screen.is_time_to_reload:
+        if screen.is_time_to_reload or screen.reload_data:
+            screen.is_reloading = True  # Set reloading flag for visual indicator
+            screen.reload_data = False  # Clear manual reload flag
+            debug_logger.log_event("RELOAD_START", "Starting data reload")
+            
             user_events = event_loader_csv.load()
+            # Load deleted Notion task IDs from file
+            deleted_notion_file = Path(cf.config_folder) / "deleted_notion_tasks.txt"
+            deleted_notion_ids = set()
+            if deleted_notion_file.exists():
+                try:
+                    with open(deleted_notion_file, "r", encoding="utf-8") as f:
+                        deleted_notion_ids = set(line.strip() for line in f if line.strip())
+                except Exception:
+                    pass
+            
+            # Remove old Notion tasks before reloading
+            user_tasks.items = [t for t in user_tasks.items if not (hasattr(t, 'notion_id') and t.notion_id)]
             user_tasks = task_loader_csv.load()
             user_ics_events = event_loader_ics.load()
             user_ics_tasks = task_loader_ics.load()
-
+            # Reload Notion tasks, but skip deleted ones
+            live_tasks = notion_loader.load()
+            for task in live_tasks:
+                if not task.is_header:
+                    # Skip tasks that were deleted
+                    if hasattr(task, 'notion_id') and task.notion_id in deleted_notion_ids:
+                        continue
+                    task.item_id = user_tasks.generate_id()
+                user_tasks.add_item(task)
+            screen.last_data_reload_time = datetime.datetime.now()
+            screen.is_reloading = False  # Clear reloading flag
+            debug_logger.log_event("RELOAD_COMPLETE", "Data reload finished")
+    
+    except KeyboardInterrupt:
+        debug_logger.log_event("EXIT", "User interrupted (Ctrl+C)")
+        raise
+    except Exception as e:
+        import traceback
+        debug_logger.log_crash(e, traceback.format_exc())
+        raise
+    
     # Cleaning up before quitting:
+    debug_logger.log_event("EXIT", "Normal exit")
     curses.echo()
     curses.curs_set(True)
     curses.endwin()

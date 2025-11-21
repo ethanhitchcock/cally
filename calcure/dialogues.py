@@ -175,3 +175,38 @@ def vim_style_exit(stdscr, screen):
             return True
     else:
         return False
+
+
+def input_status_selection(stdscr, y, x, question, status_options):
+    """Display status options and let user select one"""
+    if not status_options:
+        return None
+    
+    y_max, x_max = stdscr.getmaxyx()
+    start_y = max(0, y - len(status_options) // 2)
+    
+    # Display question
+    display_question(stdscr, y, x, question, Color.PROMPTS)
+    
+    # Display options
+    selected = 0
+    while True:
+        for idx, option in enumerate(status_options):
+            opt_name = option.get("name", "Unknown")
+            opt_color = Color.ACTIVE_PANE if idx == selected else Color.TODO
+            opt_y = start_y + idx + 1
+            if opt_y < y_max - 1:
+                prefix = "> " if idx == selected else "  "
+                display_question(stdscr, opt_y, x, f"{prefix}{opt_name}", opt_color)
+        
+        stdscr.refresh()
+        key = stdscr.getkey()
+        
+        if key in ["KEY_UP", "k"]:
+            selected = max(0, selected - 1)
+        elif key in ["KEY_DOWN", "j"]:
+            selected = min(len(status_options) - 1, selected + 1)
+        elif key in ["\n", "\r", "KEY_ENTER"]:
+            return status_options[selected].get("name")
+        elif key == "\x1b":  # ESC
+            return None

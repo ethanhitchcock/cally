@@ -15,11 +15,23 @@ class TaskSaverCSV:
         self.use_persian_calendar = cf.USE_PERSIAN_CALENDAR
 
     def save(self):
-        """Rewrite CSV file with changed tasks"""
+        """Rewrite CSV file with changed tasks (only local tasks, exclude Notion tasks)"""
         original_file = self.tasks_file
         dummy_file = Path(f"{self.tasks_file}.bak")
+        local_tasks_saved = 0
+        try:
+            from calcure.debug_logger import debug_logger
+            debug_logger.log_event("TASK_SAVE_START", f"Saving tasks to {self.tasks_file}")
+        except:
+            pass
+        
         with open(dummy_file, "w", encoding="utf-8") as f:
             for task in self.user_tasks.items:
+                # Skip Notion tasks and header tasks - only save local tasks
+                if hasattr(task, 'notion_id') and task.notion_id:
+                    continue
+                if hasattr(task, 'is_header') and task.is_header:
+                    continue
 
                 # If persian calendar was used, we convert event back to Gregorian for storage:
                 if self.use_persian_calendar and task.year != 0:
@@ -32,8 +44,22 @@ class TaskSaverCSV:
                 for stamp in task.timer.stamps:
                     f.write(f',{str(stamp)}')
                 f.write("\n")
+                local_tasks_saved += 1
+                
+                try:
+                    from calcure.debug_logger import debug_logger
+                    debug_logger.logger.debug(f"Saved task (ID: {task.item_id}): '{task.name}'")
+                except:
+                    pass
+        
         dummy_file.replace(original_file)
         self.user_tasks.changed = False
+        
+        try:
+            from calcure.debug_logger import debug_logger
+            debug_logger.log_event("TASK_SAVE_COMPLETE", f"Saved {local_tasks_saved} local tasks to {self.tasks_file}")
+        except:
+            pass
 
 
 class EventSaverCSV:

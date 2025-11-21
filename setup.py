@@ -4,7 +4,7 @@ import setuptools
 
 setup_dir = Path(__file__).resolve().parent
 
-version = re.search( r'__version__ = "(.*)"', Path(setup_dir, 'calcure/__main__.py').open().read())
+version = re.search( r'__version__ = "(.*)"', Path(setup_dir, 'calcure/__main__.py').open(encoding="utf-8").read())
 if version is None:
     raise SystemExit("Could not determine version to use")
 version = version.group(1)
@@ -15,7 +15,7 @@ setuptools.setup(
     author_email='anufriev.roman@protonmail.com',
     url='https://github.com/anufrievroman/calcure',
     description='Modern TUI calendar and task manager',
-    long_description=Path(setup_dir, 'README.md').open().read(),
+    long_description=Path(setup_dir, 'README.md').open(encoding="utf-8").read(),
     long_description_content_type='text/markdown',
     license='MIT',
     entry_points={
@@ -23,7 +23,7 @@ setuptools.setup(
             "calcure = calcure.__main__:cli"
         ]
     },
-    install_requires=['holidays', 'jdatetime', 'icalendar'],
+    install_requires=['holidays', 'jdatetime', 'icalendar', 'requests', 'python-dotenv'],
     version=version,
     python_requires='~=3.9',
     classifiers=[

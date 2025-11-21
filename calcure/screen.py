@@ -12,16 +12,17 @@ class Screen:
     def __init__(self, stdscr, cf):
         self.stdscr = stdscr
         self.privacy = cf.PRIVACY_MODE
-        self.state = cf.DEFAULT_VIEW
+        self.state = AppState.CALENDAR  # Always calendar state, journal shown in split
         self.calendar_state = CalState.DAILY if cf.DEFAULT_CALENDAR_VIEW == "daily" else CalState.MONTHLY
         self.use_persian_calendar = cf.USE_PERSIAN_CALENDAR
-        self.split = cf.SPLIT_SCREEN
+        self.split = True  # Always use split screen for unified workflow
         self.show_week_numbers = cf.SHOW_WEEK_NUMBERS
         self.right_pane_percentage = cf.RIGHT_PANE_PERCENTAGE
         self.currently_drawn = self.state
         self.selection_mode = False
         self.refresh_now = True
         self.reload_data = False
+        self.is_reloading = False  # Flag for visual refresh indicator
         self.key = None
         self.day = self.today.day
         self.month = self.today.month

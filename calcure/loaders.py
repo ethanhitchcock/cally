@@ -109,49 +109,68 @@ class EventLoaderCSV(LoaderCSV):
         """Read from CSV file"""
         self.user_events.delete_all_items()
         lines = self.read_file(self.events_file)
-        for index, row in enumerate(lines):
-            event_id = index
-            year = int(row[1])
-            month = int(row[2])
-            day = int(row[3])
-            if row[4][0] == '.':
-                name = row[4][1:]
-                is_private = True
-            else:
-                name = row[4]
-                is_private = False
-
-            # Account for old versions of the datafile:
-            if len(row) > 5:
-                repetition = int(row[5])
-                if row[6] == 'd':
-                    frequency = Frequency.DAILY
-                elif row[6] == 'w':
-                    frequency = Frequency.WEEKLY
-                elif row[6] == 'm':
-                    frequency = Frequency.MONTHLY
-                elif row[6] == 'y':
-                    frequency = Frequency.YEARLY
+        logging.info(f"Loading events from {self.events_file}, found {len(lines)} lines")
+        parsed_count = 0
+        error_count = 0
+        
+        for index, row in enumerate(lines, 1):
+            try:
+                if len(row) < 5:
+                    logging.warning(f"Skipping line {index}: insufficient columns ({len(row)} < 5)")
+                    error_count += 1
+                    continue
+                    
+                event_id = index - 1
+                year = int(row[1])
+                month = int(row[2])
+                day = int(row[3])
+                if row[4][0] == '.':
+                    name = row[4][1:]
+                    is_private = True
                 else:
-                    try:
-                        frequency = Frequency[row[6].upper()]
-                    except (ValueError, KeyError):
+                    name = row[4]
+                    is_private = False
+
+                # Account for old versions of the datafile:
+                if len(row) > 5:
+                    repetition = int(row[5])
+                    if len(row) > 6:
+                        if row[6] == 'd':
+                            frequency = Frequency.DAILY
+                        elif row[6] == 'w':
+                            frequency = Frequency.WEEKLY
+                        elif row[6] == 'm':
+                            frequency = Frequency.MONTHLY
+                        elif row[6] == 'y':
+                            frequency = Frequency.YEARLY
+                        else:
+                            try:
+                                frequency = Frequency[row[6].upper()]
+                            except (ValueError, KeyError):
+                                frequency = Frequency.ONCE
+                    else:
                         frequency = Frequency.ONCE
-            else:
-                repetition = '1'
-                frequency = Frequency.ONCE
-            if len(row) > 7:
-                status = Status[row[7].upper()]
-            else:
-                status = Status.NORMAL
+                else:
+                    repetition = 1
+                    frequency = Frequency.ONCE
+                if len(row) > 7:
+                    status = Status[row[7].upper()]
+                else:
+                    status = Status.NORMAL
 
-            # Convert to persian date if needed:
-            if self.use_persian_calendar:
-                year, month, day = convert_to_persian_date(year, month, day)
+                # Convert to persian date if needed:
+                if self.use_persian_calendar:
+                    year, month, day = convert_to_persian_date(year, month, day)
 
-            # Add event:
-            new_event = UserEvent(event_id, year, month, day, name, repetition, frequency, status, is_private)
-            self.user_events.add_item(new_event)
+                # Add event:
+                new_event = UserEvent(event_id, year, month, day, name, repetition, frequency, status, is_private)
+                self.user_events.add_item(new_event)
+                parsed_count += 1
+            except (ValueError, IndexError, KeyError) as e:
+                error_count += 1
+                logging.error(f"Failed to parse line {index} in {self.events_file}: {e}. Row: {row}")
+        
+        logging.info(f"Parsed {parsed_count} events successfully, {error_count} errors")
         self.user_events.changed = False
         return self.user_events
 
@@ -425,6 +444,16 @@ class EventLoaderICS(LoaderICS):
             year, month, day = dt.year, dt.month, dt.day
         except AttributeError:
             year, month, day = 0, 1, 1
+        
+        # Log event details for debugging (INFO level so it shows up)
+        try:
+            from calcure.debug_logger import get_debug_logger
+            logger = get_debug_logger()
+            logger.logger.info(f"ICS Event {index}: '{name}' on {year}/{month}/{day} (calendar {calendar_number})")
+        except Exception as e:
+            # Log to standard logging if debug_logger fails
+            logging.debug(f"ICS Event {index}: '{name}' on {year}/{month}/{day} (calendar {calendar_number})")
+            logging.debug(f"Debug logger import failed: {e}")
 
         # See if this event takes multiple days:
         try:
@@ -481,10 +510,26 @@ class EventLoaderICS(LoaderICS):
             return self.user_ics_events
 
         self.user_ics_events.delete_all_items()
+        try:
+            from calcure.debug_logger import get_debug_logger
+            logger = get_debug_logger()
+            logger.log_event("ICS_LOAD_START", f"Loading ICS events from {len(self.ics_event_files)} source(s)")
+        except Exception as e:
+            logging.info(f"[ICS_LOAD_START] Loading ICS events from {len(self.ics_event_files)} source(s)")
+            logging.debug(f"Debug logger import failed: {e}")
+        
         for calendar_number, filename in enumerate(self.ics_event_files):
+            try:
+                from calcure.debug_logger import get_debug_logger
+                logger = get_debug_logger()
+                logger.log_event("ICS_SOURCE", f"Loading from source {calendar_number+1}: {filename}")
+            except Exception as e:
+                logging.info(f"[ICS_SOURCE] Loading from source {calendar_number+1}: {filename}")
+                logging.debug(f"Debug logger import failed: {e}")
 
             # For each resource from config, load a list that has one or more ics files:
             ics_files = self.read_resource(filename)
+            event_count_before = len(self.user_ics_events.items)
             for ics_file in ics_files:
                 try:
                     cal = icalendar.Calendar.from_ical(ics_file)
@@ -496,4 +541,29 @@ class EventLoaderICS(LoaderICS):
 
                 except Exception as e_message:
                     logging.error("Failed to parse %s. %s", filename, e_message)
+                    try:
+                        from calcure.debug_logger import get_debug_logger
+                        logger = get_debug_logger()
+                        logger.log_error("ICS_PARSE_ERROR", f"Failed to parse {filename}: {e_message}", e_message)
+                    except Exception as e:
+                        logging.error(f"[ICS_PARSE_ERROR] Failed to parse {filename}: {e_message}")
+                        logging.debug(f"Debug logger import failed: {e}")
+            
+            event_count_after = len(self.user_ics_events.items)
+            events_added = event_count_after - event_count_before
+            try:
+                from calcure.debug_logger import get_debug_logger
+                logger = get_debug_logger()
+                logger.log_event("ICS_SOURCE_COMPLETE", f"Source {calendar_number+1} ({filename}): Added {events_added} events")
+            except Exception as e:
+                logging.info(f"[ICS_SOURCE_COMPLETE] Source {calendar_number+1} ({filename}): Added {events_added} events")
+                logging.debug(f"Debug logger import failed: {e}")
+        
+        try:
+            from calcure.debug_logger import get_debug_logger
+            logger = get_debug_logger()
+            logger.log_event("ICS_LOAD_COMPLETE", f"Total ICS events loaded: {len(self.user_ics_events.items)}")
+        except Exception as e:
+            logging.info(f"[ICS_LOAD_COMPLETE] Total ICS events loaded: {len(self.user_ics_events.items)}")
+            logging.debug(f"Debug logger import failed: {e}")
         return self.user_ics_events

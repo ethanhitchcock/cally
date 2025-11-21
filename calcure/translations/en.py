@@ -11,8 +11,8 @@ TITLE_KEYS_CALENDAR = "CALENDAR KEYBINDINGS"
 TITLE_KEYS_JOURNAL  = "JOURNAL KEYBINDINGS"
 
 KEYS_GENERAL = {
-        " Space ": "Switch between calendar and journal",
-        "   /   ": "Toggle split screen",
+        "   t   ": "Create task",
+        "   a   ": "Add event",
         "   *   ": "Toggle global privacy",
         "   ?   ": "Toggle this help",
         "   Q   ": "Reload",
@@ -23,12 +23,12 @@ KEYS_CALENDAR = {
         "  a(A) ": "Add a (recurring) event",
         "   n   ": "Next month (day)",
         "   p   ": "Previous month (day)",
-        "   x   ": "Delete an event",
-        "   r   ": "Rename an event",
+        "   x   ": "Delete an event (press x, then enter event number)",
+        "  e(r) ": "Rename/edit an event",
         "  m(M) ": "Move event (in this month)",
         "  g(G) ": "Go to a certain day (in this month)",
         "   v   ": "Toggle daily/monthly view",
-        "   w   ": "Toggle week numbers",
+        "   w   ": "Toggle weekly/monthly view",
         "   h   ": "Toggle event as high priority",
         "   l   ": "Toggle event as low priority",
         "   d   ": "Toggle event as done",
@@ -38,18 +38,19 @@ KEYS_CALENDAR = {
         }
 
 KEYS_TODO = {
-        "  a(A) ": "Add new (sub)task",
+        "   t   ": "Create new task",
+        "  T(T) ": "Start/pause (remove) timer for a task",
         "  h(H) ": "Toggle one (all) of the tasks as high priority",
         "  l(L) ": "Toggle one (all) of the tasks as low priority",
         "  d(D) ": "Toggle one (all) of the tasks as done",
         "  u(U) ": "Unmark one (all) of the tasks",
         "  x(X) ": "Delete one (all) of the tasks (with all subtasks)",
-        "  t(T) ": "Start/pause (remove) timer for a task",
-        "   r   ": "Rename a task",
+        "  e(r) ": "Edit/rename a task",
         "   s   ": "Toggle between task and subtask",
         "   .   ": "Toggle task privacy",
         "  f(F) ": "Change (remove) task deadline",
         "   m   ": "Move a task",
+        "   c   ": "Change Notion task status",
         "   C   ": "Import tasks from calcurse",
         }
 
@@ -103,9 +104,9 @@ MSG_INPUT         = "Incorrect input."
 MSG_GOTO          = "Go to date (YYYY/MM/DD): "
 MSG_GOTO_D        = "Go to date: "
 
-CALENDAR_HINT     = "Space · Switch to journal   a · Add event  n/p · Change month   ? · All keybindings"
-CALENDAR_HINT_D   = "Space · Switch to journal   a · Add event  n/p · Change day   ? · All keybindings"
-JOURNAL_HINT      = "Space · Switch to calendar   a · Add task   d · Done   i · Important   ? · All keybindings"
+CALENDAR_HINT     = "a · Add event   A · Recurring event   t · Add task   n/p · Change month   w · Weekly   ? · All keybindings"
+CALENDAR_HINT_D   = "a · Add event   A · Recurring event   t · Add task   n/p · Change day   w · Weekly   ? · All keybindings"
+JOURNAL_HINT      = "t · Add task   d/v · Mark done   x · Delete   h/i · Important   c · Change status   ? · All keybindings"
 
 DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
 DAYS_PERSIAN = ["SHANBEH", "YEKSHANBEH", "DOSHANBEH", "SESHANBEH", "CHAHARSHANBEH", "PANJSHANBEH", "JOMEH"]
