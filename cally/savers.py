@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from calcure.data import *
-from calcure.calendars import convert_to_gregorian_date
+from cally.data import *
+from cally.calendars import convert_to_gregorian_date
 
 
 class TaskSaverCSV:
@@ -20,7 +20,7 @@ class TaskSaverCSV:
         dummy_file = Path(f"{self.tasks_file}.bak")
         local_tasks_saved = 0
         try:
-            from calcure.debug_logger import debug_logger
+            from cally.debug_logger import debug_logger
             debug_logger.log_event("TASK_SAVE_START", f"Saving tasks to {self.tasks_file}")
         except:
             pass
@@ -47,7 +47,7 @@ class TaskSaverCSV:
                 local_tasks_saved += 1
                 
                 try:
-                    from calcure.debug_logger import debug_logger
+                    from cally.debug_logger import debug_logger
                     debug_logger.logger.debug(f"Saved task (ID: {task.item_id}): '{task.name}'")
                 except:
                     pass
@@ -56,7 +56,7 @@ class TaskSaverCSV:
         self.user_tasks.changed = False
         
         try:
-            from calcure.debug_logger import debug_logger
+            from cally.debug_logger import debug_logger
             debug_logger.log_event("TASK_SAVE_COMPLETE", f"Saved {local_tasks_saved} local tasks to {self.tasks_file}")
         except:
             pass

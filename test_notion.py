@@ -2,7 +2,7 @@ import os
 import json
 import requests
 from dotenv import load_dotenv
-from calcure.loaders_live import NotionTaskLoader
+from cally.loaders_live import NotionTaskLoader
 
 # 1. Load Environment Variables
 load_dotenv()

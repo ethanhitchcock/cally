@@ -1,6 +1,6 @@
 import os
 import requests
-from calcure.data import Task, Status, Timer
+from cally.data import Task, Status, Timer
 
 class LiveLoader:
     """Base class for live data connectors"""
@@ -180,11 +180,11 @@ class NotionTaskLoader(LiveLoader):
                 # Status
                 status_obj = props.get("Status", {}).get("status", {})
                 status_name = status_obj.get("name")
-                calcure_status = Status.NORMAL
+                cally_status = Status.NORMAL
                 if status_name in ["High", "Urgent"]:
-                    calcure_status = Status.IMPORTANT
+                    cally_status = Status.IMPORTANT
                 
-                task = Task(0, task_name, calcure_status, Timer([]), False, 
+                task = Task(0, task_name, cally_status, Timer([]), False, 
                             notion_id=notion_id, 
                             project_name=project_name, 
                             notion_status_options=self.status_options,

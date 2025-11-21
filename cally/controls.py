@@ -5,33 +5,33 @@ import importlib
 import logging
 
 # Modules:
-from calcure.data import *
-from calcure.dialogues import *
-from calcure.configuration import Config
+from cally.data import *
+from cally.dialogues import *
+from cally.configuration import Config
 
 cf = Config()
 
 # Language:
 if cf.LANG == "fr":
-    from calcure.translations.fr import *
+    from cally.translations.fr import *
 elif cf.LANG == "ru":
-    from calcure.translations.ru import *
+    from cally.translations.ru import *
 elif cf.LANG == "it":
-    from calcure.translations.it import *
+    from cally.translations.it import *
 elif cf.LANG == "br":
-    from calcure.translations.br import *
+    from cally.translations.br import *
 elif cf.LANG == "tr":
-    from calcure.translations.tr import *
+    from cally.translations.tr import *
 elif cf.LANG == "zh":
-    from calcure.translations.zh import *
+    from cally.translations.zh import *
 elif cf.LANG == "tw":
-    from calcure.translations.tw import *
+    from cally.translations.tw import *
 elif cf.LANG == "sk":
-    from calcure.translations.sk import *
+    from cally.translations.sk import *
 elif cf.LANG == "es":
-    from calcure.translations.es import *
+    from cally.translations.es import *
 else:
-    from calcure.translations.en import *
+    from cally.translations.en import *
 
 
 def safe_run(func):
@@ -212,7 +212,7 @@ def control_monthly_screen(stdscr, screen, user_events, importer):
                         hour, minute = None, None
                 
                 event_id = user_events.items[-1].item_id + 1 if not user_events.is_empty() else 1
-                # Status is imported from calcure.data import * at top of file
+                # Status is imported from cally.data import * at top of file
                 user_events.add_item(UserEvent(event_id, year, month, day, name, 1, Frequency.ONCE, Status.NORMAL, False, hour=hour, minute=minute, end_hour=end_hour, end_minute=end_minute))
                 screen.refresh_now = True
 
@@ -732,7 +732,7 @@ def control_journal_screen(stdscr, screen, user_tasks, importer, notion_saver=No
                 
                 # Log status change attempt
                 try:
-                    from calcure.debug_logger import debug_logger
+                    from cally.debug_logger import debug_logger
                     debug_logger.log_event("TASK_STATUS_CHANGE", f"Changing status of task #{number} (ID: {task.item_id}): '{task_name}' from {old_status.name}")
                 except:
                     pass
@@ -751,13 +751,13 @@ def control_journal_screen(stdscr, screen, user_tasks, importer, notion_saver=No
                                         notion_saver.update_status(task.notion_id, opt.get("name"))
                                         task.current_notion_status = opt.get("name")
                                         try:
-                                            from calcure.debug_logger import debug_logger
+                                            from cally.debug_logger import debug_logger
                                             debug_logger.log_event("NOTION_STATUS_SYNC", f"Synced Notion task {task.notion_id} status to '{opt.get('name')}'")
                                         except:
                                             pass
                                     except Exception as e:
                                         try:
-                                            from calcure.debug_logger import debug_logger
+                                            from cally.debug_logger import debug_logger
                                             debug_logger.log_error("NOTION_SYNC_ERROR", f"Failed to sync Notion status: {e}", e)
                                         except:
                                             pass
@@ -771,13 +771,13 @@ def control_journal_screen(stdscr, screen, user_tasks, importer, notion_saver=No
                             notion_saver.update_status(task.notion_id, "Done")
                             task.current_notion_status = "Done"
                             try:
-                                from calcure.debug_logger import debug_logger
+                                from cally.debug_logger import debug_logger
                                 debug_logger.log_event("NOTION_STATUS_SYNC", f"Synced Notion task {task.notion_id} status to 'Done'")
                             except:
                                 pass
                         except Exception as e:
                             try:
-                                from calcure.debug_logger import debug_logger
+                                from cally.debug_logger import debug_logger
                                 debug_logger.log_error("NOTION_SYNC_ERROR", f"Failed to sync Notion status to Done: {e}", e)
                             except:
                                 pass
@@ -786,7 +786,7 @@ def control_journal_screen(stdscr, screen, user_tasks, importer, notion_saver=No
                 screen.refresh_now = True
                 
                 try:
-                    from calcure.debug_logger import debug_logger
+                    from cally.debug_logger import debug_logger
                     debug_logger.log_event("TASK_STATUS_CHANGED", f"Task #{number} (ID: {task.item_id}): '{task_name}' status changed from {old_status.name} to {new_status.name}")
                 except:
                     pass
@@ -846,14 +846,14 @@ def control_journal_screen(stdscr, screen, user_tasks, importer, notion_saver=No
                 
                 # Log deletion attempt
                 try:
-                    from calcure.debug_logger import debug_logger
+                    from cally.debug_logger import debug_logger
                     debug_logger.log_event("TASK_DELETE_ATTEMPT", f"Attempting to delete task #{number} (ID: {task_id}): '{task_name}'")
                 except:
                     pass
                 
                 # Ask for confirmation
-                from calcure.dialogues import ask_confirmation
-                from calcure.translations.en import MSG_TS_DEL_ALL
+                from cally.dialogues import ask_confirmation
+                from cally.translations.en import MSG_TS_DEL_ALL
                 confirmed = ask_confirmation(stdscr, f"Really delete task '{task_name}'? (y/n) ", cf.ASK_CONFIRMATIONS)
                 
                 if confirmed:
@@ -861,7 +861,7 @@ def control_journal_screen(stdscr, screen, user_tasks, importer, notion_saver=No
                     if hasattr(task, 'notion_id') and task.notion_id:
                         task._deleted = True
                         try:
-                            from calcure.debug_logger import debug_logger
+                            from cally.debug_logger import debug_logger
                             debug_logger.log_event("TASK_DELETE_NOTION", f"Marking Notion task {task.notion_id} as deleted")
                         except:
                             pass
@@ -871,13 +871,13 @@ def control_journal_screen(stdscr, screen, user_tasks, importer, notion_saver=No
                     screen.refresh_now = True
                     
                     try:
-                        from calcure.debug_logger import debug_logger
+                        from cally.debug_logger import debug_logger
                         debug_logger.log_event("TASK_DELETE_SUCCESS", f"Successfully deleted task #{number} (ID: {task_id}): '{task_name}'")
                     except:
                         pass
                 else:
                     try:
-                        from calcure.debug_logger import debug_logger
+                        from cally.debug_logger import debug_logger
                         debug_logger.log_event("TASK_DELETE_CANCELLED", f"User cancelled deletion of task #{number}: '{task_name}'")
                     except:
                         pass
@@ -949,7 +949,7 @@ def control_journal_screen(stdscr, screen, user_tasks, importer, notion_saver=No
                 
                 # Log task creation
                 try:
-                    from calcure.debug_logger import debug_logger
+                    from cally.debug_logger import debug_logger
                     debug_logger.log_event("TASK_CREATE", f"Created local task (ID: {task_id}): '{task_name}' at position 0")
                 except:
                     pass

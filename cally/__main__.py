@@ -15,52 +15,52 @@ from dotenv import load_dotenv
 # Load environment variables for live loaders
 load_dotenv()
 
-from calcure.calendars import Calendar
-from calcure.errors import Error
-from calcure.configuration import Config
-from calcure.weather import Weather
-from calcure.importers import Importer
-from calcure.dialogues import clear_line
-from calcure.screen import Screen
-from calcure.savers import TaskSaverCSV, EventSaverCSV
-from calcure.colors import Color, initialize_colors
-from calcure.loaders import *
-from calcure.data import *
-from calcure.controls import *
-from calcure.moon import get_moon_phase
-from calcure.debug_logger import init_debug_logger, get_debug_logger
+from cally.calendars import Calendar
+from cally.errors import Error
+from cally.configuration import Config
+from cally.weather import Weather
+from cally.importers import Importer
+from cally.dialogues import clear_line
+from cally.screen import Screen
+from cally.savers import TaskSaverCSV, EventSaverCSV
+from cally.colors import Color, initialize_colors
+from cally.loaders import *
+from cally.data import *
+from cally.controls import *
+from cally.moon import get_moon_phase
+from cally.debug_logger import init_debug_logger, get_debug_logger
 
 
 # Initialise config:
 cf = Config()
 error = Error(cf.LOG_FILE)
-# Initialize debug logger in calcure directory (current working directory)
-debug_log_file = Path.cwd() / "calcure_debug.log"
+# Initialize debug logger in cally directory (current working directory)
+debug_log_file = Path.cwd() / "cally_debug.log"
 debug_logger = init_debug_logger(str(debug_log_file))
 
 # Language:
 if cf.LANG == "fr":
-    from calcure.translations.fr import *
+    from cally.translations.fr import *
 elif cf.LANG == "ru":
-    from calcure.translations.ru import *
+    from cally.translations.ru import *
 elif cf.LANG == "it":
-    from calcure.translations.it import *
+    from cally.translations.it import *
 elif cf.LANG == "br":
-    from calcure.translations.br import *
+    from cally.translations.br import *
 elif cf.LANG == "tr":
-    from calcure.translations.tr import *
+    from cally.translations.tr import *
 elif cf.LANG == "zh":
-    from calcure.translations.zh import *
+    from cally.translations.zh import *
 elif cf.LANG == "tw":
-    from calcure.translations.tw import *
+    from cally.translations.tw import *
 elif cf.LANG == "sk":
-    from calcure.translations.sk import *
+    from cally.translations.sk import *
 elif cf.LANG == "de":
-    from calcure.translations.de import *
+    from cally.translations.de import *
 elif cf.LANG == "es":
-    from calcure.translations.es import *
+    from cally.translations.es import *
 else:
-    from calcure.translations.en import *
+    from cally.translations.en import *
 
 
 __version__ = "3.2.1"
@@ -518,7 +518,7 @@ class DailyView(View):
         
         # Debug logging for ICS events filtering
         try:
-            from calcure.debug_logger import get_debug_logger
+            from cally.debug_logger import get_debug_logger
             logger = get_debug_logger()
             if len(user_ics_events.items) > 0:
                 logger.logger.debug(f"DailyView: Filtering ICS events for {screen.year}/{screen.month}/{screen.day}: {len(user_ics_events.items)} total ICS events, {len(self.user_ics_events.items)} match this day")
@@ -1314,7 +1314,7 @@ def main(stdscr) -> None:
 
     # Load live data (Notion):
     try:
-        from calcure.loaders_live import NotionTaskLoader
+        from cally.loaders_live import NotionTaskLoader
         notion_loader = NotionTaskLoader(cf)
         live_tasks = notion_loader.load()
         debug_logger.log_data_load("NotionTaskLoader", len(live_tasks))
@@ -1337,7 +1337,7 @@ def main(stdscr) -> None:
     importer = Importer(user_tasks, user_events, cf)
     
     # Live Savers
-    from calcure.loaders_live import NotionTaskSaver
+    from cally.loaders_live import NotionTaskSaver
     notion_saver = NotionTaskSaver()
 
     read_items_from_user_arguments(screen, user_tasks, user_events, task_saver_csv, event_saver_csv)

@@ -1,6 +1,6 @@
 """Chinese Traditional translations of the program interface"""
 
-MSG_WELCOME_1 = "歡迎使用 Calcure"
+MSG_WELCOME_1 = "歡迎使用 Cally"
 MSG_WELCOME_2 = "您的終端日曆與任務管理器！"
 MSG_WELCOME_3 = "配置檔案和資料檔案已創建於："
 MSG_WELCOME_4 = "如需支援、貢獻或更多資訊，請造訪："
@@ -52,10 +52,10 @@ KEYS_TODO = {
         "   C   ": "從 Calcurse 匯入任務",
         }
 
-MSG_NAME          = "CALCURE"
+MSG_NAME          = "CALLY"
 MSG_VIM           = "方向鍵和 Vim 快捷鍵（j、k、ZZ、ZQ）也可以使用！"
 MSG_INFO          = "更多資訊，請造訪："
-MSG_SITE          = "https://anufrievroman.gitbook.io/calcure"
+MSG_SITE          = "https://anufrievroman.gitbook.io/cally"
 MSG_EXIT          = "確定退出？(y/n)"
 
 MSG_EVENT_HIGH    = "標記為高優先級行程編號："

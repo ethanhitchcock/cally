@@ -11,8 +11,8 @@ import logging
 
 from pathlib import Path
 
-from calcure.data import *
-from calcure.calendars import convert_to_persian_date
+from cally.data import *
+from cally.calendars import convert_to_persian_date
 
 
 class LoaderCSV:
@@ -447,7 +447,7 @@ class EventLoaderICS(LoaderICS):
         
         # Log event details for debugging (INFO level so it shows up)
         try:
-            from calcure.debug_logger import get_debug_logger
+            from cally.debug_logger import get_debug_logger
             logger = get_debug_logger()
             logger.logger.info(f"ICS Event {index}: '{name}' on {year}/{month}/{day} (calendar {calendar_number})")
         except Exception as e:
@@ -511,7 +511,7 @@ class EventLoaderICS(LoaderICS):
 
         self.user_ics_events.delete_all_items()
         try:
-            from calcure.debug_logger import get_debug_logger
+            from cally.debug_logger import get_debug_logger
             logger = get_debug_logger()
             logger.log_event("ICS_LOAD_START", f"Loading ICS events from {len(self.ics_event_files)} source(s)")
         except Exception as e:
@@ -520,7 +520,7 @@ class EventLoaderICS(LoaderICS):
         
         for calendar_number, filename in enumerate(self.ics_event_files):
             try:
-                from calcure.debug_logger import get_debug_logger
+                from cally.debug_logger import get_debug_logger
                 logger = get_debug_logger()
                 logger.log_event("ICS_SOURCE", f"Loading from source {calendar_number+1}: {filename}")
             except Exception as e:
@@ -542,7 +542,7 @@ class EventLoaderICS(LoaderICS):
                 except Exception as e_message:
                     logging.error("Failed to parse %s. %s", filename, e_message)
                     try:
-                        from calcure.debug_logger import get_debug_logger
+                        from cally.debug_logger import get_debug_logger
                         logger = get_debug_logger()
                         logger.log_error("ICS_PARSE_ERROR", f"Failed to parse {filename}: {e_message}", e_message)
                     except Exception as e:
@@ -552,7 +552,7 @@ class EventLoaderICS(LoaderICS):
             event_count_after = len(self.user_ics_events.items)
             events_added = event_count_after - event_count_before
             try:
-                from calcure.debug_logger import get_debug_logger
+                from cally.debug_logger import get_debug_logger
                 logger = get_debug_logger()
                 logger.log_event("ICS_SOURCE_COMPLETE", f"Source {calendar_number+1} ({filename}): Added {events_added} events")
             except Exception as e:
@@ -560,7 +560,7 @@ class EventLoaderICS(LoaderICS):
                 logging.debug(f"Debug logger import failed: {e}")
         
         try:
-            from calcure.debug_logger import get_debug_logger
+            from cally.debug_logger import get_debug_logger
             logger = get_debug_logger()
             logger.log_event("ICS_LOAD_COMPLETE", f"Total ICS events loaded: {len(self.user_ics_events.items)}")
         except Exception as e:

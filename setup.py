@@ -4,23 +4,23 @@ import setuptools
 
 setup_dir = Path(__file__).resolve().parent
 
-version = re.search( r'__version__ = "(.*)"', Path(setup_dir, 'calcure/__main__.py').open(encoding="utf-8").read())
+version = re.search( r'__version__ = "(.*)"', Path(setup_dir, 'cally/__main__.py').open(encoding="utf-8").read())
 if version is None:
     raise SystemExit("Could not determine version to use")
 version = version.group(1)
 
 setuptools.setup(
-    name='calcure',
+    name='cally',
     author='Roman Anufriev',
     author_email='anufriev.roman@protonmail.com',
-    url='https://github.com/anufrievroman/calcure',
+    url='https://github.com/anufrievroman/cally',
     description='Modern TUI calendar and task manager',
     long_description=Path(setup_dir, 'README.md').open(encoding="utf-8").read(),
     long_description_content_type='text/markdown',
     license='MIT',
     entry_points={
         "console_scripts": [
-            "calcure = calcure.__main__:cli"
+            "cally = cally.__main__:cli"
         ]
     },
     install_requires=['holidays', 'jdatetime', 'icalendar', 'requests', 'python-dotenv'],
@@ -39,11 +39,11 @@ setuptools.setup(
         "Programming Language :: Python :: 3.13",
         "Topic :: Utilities",
     ],
-    packages=["calcure", "calcure.translations"],
+    packages=["cally", "cally.translations"],
     include_package_data=True,
     data_files=[
         ('share/man/man1',
-         ['calcure.1.gz']
+         ['cally.1.gz']
          ),
     ],
 )

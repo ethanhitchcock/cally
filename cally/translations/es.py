@@ -1,6 +1,6 @@
 """Spanish translations of the program interface"""
 
-MSG_WELCOME_1 = "Bienvenido a Calcure"
+MSG_WELCOME_1 = "Bienvenido a Cally"
 MSG_WELCOME_2 = "¡Tu calendario y administrador de tareas en la terminal!"
 MSG_WELCOME_3 = "Se han creados archivos de configuración en:"
 MSG_WELCOME_4 = "Para soporte, contribución e información adicional, visite:"
@@ -52,10 +52,10 @@ KEYS_TODO = {
         "   C   ": "Importar tareas desde calcurse",
         }
 
-MSG_NAME          = "CALCURE"
+MSG_NAME          = "CALLY"
 MSG_VIM           = "¡Flechas y atajos de Vim (j, k, ZZ, ZQ) también funcionan!"
 MSG_INFO          = "Para más información, visite:"
-MSG_SITE          = "https://anufrievroman.gitbook.io/calcure"
+MSG_SITE          = "https://anufrievroman.gitbook.io/cally"
 MSG_EXIT          = "¿Realmente quire salir? (y/n) "
 
 MSG_EVENT_HIGH    = "Marcar como alta prioridad el evento número: ";

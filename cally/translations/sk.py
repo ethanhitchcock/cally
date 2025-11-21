@@ -1,6 +1,6 @@
 """Slovak translations of the program interface"""
 
-MSG_WELCOME_1 = "Víta vás Calcure"
+MSG_WELCOME_1 = "Víta vás Cally"
 MSG_WELCOME_2 = "Váš kalendár a správca úloh pre terminál!"
 MSG_WELCOME_3 = "Súbory s dátami a konfiguráciou boli vytvorené v:"
 MSG_WELCOME_4 = "Ak potrebujete viac informácií o podpore, prispievaní atď, navštívte:"
@@ -52,10 +52,10 @@ KEYS_TODO = {
         "   C   ": "Importovať úlohy z calcurse",
         }
 
-MSG_NAME          = "CALCURE"
+MSG_NAME          = "CALLY"
 MSG_VIM           = "Fungujú aj Vim klávesy (j, k, ZZ, ZQ)!"
 MSG_INFO          = "Pre viac informácií navštívte:"
-MSG_SITE          = "https://anufrievroman.gitbook.io/calcure"
+MSG_SITE          = "https://anufrievroman.gitbook.io/cally"
 MSG_EXIT          = "Naozaj ukončiť? (y/n) "
 
 MSG_EVENT_HIGH    = "Nastaviť vysokú prioritu udalosti číslo: "

@@ -3,8 +3,8 @@
 import datetime
 import logging
 
-from calcure.data import Events, AppState, CalState
-from calcure.calendars import Calendar
+from cally.data import Events, AppState, CalState
+from cally.calendars import Calendar
 
 
 class Screen:

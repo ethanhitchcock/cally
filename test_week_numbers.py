@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Test script to verify week numbers are working in calcure"""
+"""Test script to verify week numbers are working in cally"""
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'calcure'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'cally'))
 
-from calcure.calendars import Calendar
+from cally.calendars import Calendar
 
 def test_week_numbers():
     """Test the week number functionality"""

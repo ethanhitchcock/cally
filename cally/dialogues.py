@@ -3,8 +3,8 @@
 import curses
 import logging
 
-from calcure.data import Frequency
-from calcure.colors import Color
+from cally.data import Frequency
+from cally.colors import Color
 
 
 

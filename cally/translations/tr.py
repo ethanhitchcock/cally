@@ -1,6 +1,6 @@
 """Turkish translations of the program interface"""
 
-MSG_WELCOME_1 = "Calcure'a hoş geldiniz"
+MSG_WELCOME_1 = "Cally'a hoş geldiniz"
 MSG_WELCOME_2 = "Terminal takviminiz ve görev yöneticiniz!"
 MSG_WELCOME_3 = "Yapılandırma ve veri dosyaları şu adreste oluşturuldu:"
 MSG_WELCOME_4 = "Destek, katkı ve ek bilgi için şu adresi ziyaret edin:"
@@ -52,10 +52,10 @@ KEYS_TODO = {
         "   C   ": "Calcurse'den görevleri içe aktarma",
         }
 
-MSG_NAME          = "CALCURE"
+MSG_NAME          = "CALLY"
 MSG_VIM           = "Vim tuşları (j, k, ZZ, ZQ) da çalışıyor!"
 MSG_INFO          = "Daha fazla bilgi için ziyaret edin:"
-MSG_SITE          = "https://anufrievroman.gitbook.io/calcure"
+MSG_SITE          = "https://anufrievroman.gitbook.io/cally"
 MSG_EXIT          = "Gerçekten çıkıyorsun musun? (y/n) "
 
 MSG_EVENT_HIGH    = "Yüksek öncelikli olay numarası olarak işaretle: "

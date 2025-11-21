@@ -1,22 +1,22 @@
-"""Debug logging module for calcure"""
+"""Debug logging module for cally"""
 
 import logging
 import datetime
 from pathlib import Path
 
 class DebugLogger:
-    """Enhanced debug logger for calcure"""
+    """Enhanced debug logger for cally"""
     
     def __init__(self, log_file=None):
-        # Default to calcure directory if not specified
+        # Default to cally directory if not specified
         if log_file is None:
-            # Try to find calcure directory
+            # Try to find cally directory
             import os
-            calcure_dir = Path(__file__).parent.parent if Path(__file__).parent.name == 'calcure' else Path.cwd()
-            self.log_file = calcure_dir / "calcure_debug.log"
+            cally_dir = Path(__file__).parent.parent if Path(__file__).parent.name == 'cally' else Path.cwd()
+            self.log_file = cally_dir / "cally_debug.log"
         else:
             self.log_file = Path(log_file)
-        self.logger = logging.getLogger('calcure_debug')
+        self.logger = logging.getLogger('cally_debug')
         self.logger.setLevel(logging.DEBUG)
         
         # Remove existing handlers
@@ -42,7 +42,7 @@ class DebugLogger:
         self.logger.addHandler(ch)
         
         self.logger.info("=" * 80)
-        self.logger.info("Calcure Debug Log Started")
+        self.logger.info("Cally Debug Log Started")
         self.logger.info("=" * 80)
     
     def log_data_load(self, loader_name, item_count, details=None):
@@ -78,7 +78,7 @@ class DebugLogger:
 # Global debug logger instance
 debug_logger = None
 
-def init_debug_logger(log_file="calcure_debug.log"):
+def init_debug_logger(log_file="cally_debug.log"):
     """Initialize the global debug logger"""
     global debug_logger
     debug_logger = DebugLogger(log_file)

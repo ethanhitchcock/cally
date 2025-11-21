@@ -1,6 +1,6 @@
 """Italian translations of the program interface"""
 
-MSG_WELCOME_1 = "Benvenuto in Calcure"
+MSG_WELCOME_1 = "Benvenuto in Cally"
 MSG_WELCOME_2 = "Il tuo calendario da terminale e gestore di attività!"
 MSG_WELCOME_3 = "File di dati e di configurazione creati al:"
 MSG_WELCOME_4 = "Per ulteriore supporto, per contribuire e per avere informazioni aggiuntive, visitare:"
@@ -52,10 +52,10 @@ KEYS_TODO = {
         "   C   ": "Importa le attività da calcurse",
         }
 
-MSG_NAME          = "CALCURE"
+MSG_NAME          = "CALLY"
 MSG_VIM           = "È possibile usare i tasti di Vim (j, k, ZZ, ZQ)!"
 MSG_INFO          = "Per maggiori informazioni, visitare:"
-MSG_SITE          = "https://anufrievroman.gitbook.io/calcure"
+MSG_SITE          = "https://anufrievroman.gitbook.io/cally"
 MSG_EXIT          = "Vuoi davvero uscire? (y/n) "
 
 MSG_EVENT_HIGH    = "Imposta ad alta priorità l'evento con numero: "

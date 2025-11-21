@@ -2,8 +2,8 @@
 
 import logging
 
-from calcure.data import *
-from calcure.calendars import convert_to_persian_date
+from cally.data import *
+from cally.calendars import convert_to_persian_date
 
 
 class Importer:

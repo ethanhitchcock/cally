@@ -1,6 +1,6 @@
 """Russian translations of the program interface"""
 
-MSG_WELCOME_1 = "Добро пожаловать в Calcure"
+MSG_WELCOME_1 = "Добро пожаловать в Cally"
 MSG_WELCOME_2 = "Ваш новый календарь и менеджер задач!"
 MSG_WELCOME_3 = "Файлы конфигурации и данных созданы в:"
 MSG_WELCOME_4 = "Информация об участии, поддержке, и функционале доступна в репозитории:"
@@ -52,10 +52,10 @@ KEYS_TODO = {
         "   C   ": "Импортировать задачи из calcurse",
         }
 
-MSG_NAME          = "CALCURE"
+MSG_NAME          = "CALLY"
 MSG_VIM           = "Стрелки и Vim клавиши (j, k, ZZ, ZQ) работают!"
 MSG_INFO          = "Больше информации вы найдёте на:"
-MSG_SITE          = "https://anufrievroman.gitbook.io/calcure"
+MSG_SITE          = "https://anufrievroman.gitbook.io/cally"
 MSG_EXIT          = "Действительно выйти? (y/n) "
 
 MSG_EVENT_HIGH    = "Отметить как высокоприоритетное событие номер: "

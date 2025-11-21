@@ -6,7 +6,7 @@ import time
 import enum
 
 from dateutil.rrule import rruleset, rrulestr
-from calcure.calendars import Calendar
+from cally.calendars import Calendar
 
 
 class AppState(enum.Enum):
@@ -240,7 +240,7 @@ class Collection:
         # Log filtering for debugging ICS events
         if len(self.items) > 0 and hasattr(self, 'items') and len(self.items) > 0:
             try:
-                from calcure.debug_logger import get_debug_logger
+                from cally.debug_logger import get_debug_logger
                 logger = get_debug_logger()
                 if len(events_of_the_day.items) > 0:
                     logger.logger.debug(f"filter_events_that_day: Found {len(events_of_the_day.items)} events for {screen.year}/{screen.month}/{screen.day} out of {len(self.items)} total events")

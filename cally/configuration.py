@@ -7,7 +7,7 @@ import logging
 import datetime
 from pathlib import Path
 
-from calcure.data import AppState
+from cally.data import AppState
 
 
 class Config:
@@ -16,7 +16,7 @@ class Config:
         self.home_path = Path.home()
         self.calcurse_todo_file = self.home_path / ".local" / "share" / "calcurse" / "todo"
         self.calcurse_events_file = self.home_path / ".local" / "share" / "calcurse" / "apts"
-        self.config_folder = self.home_path / ".config" / "calcure"
+        self.config_folder = self.home_path / ".config" / "cally"
         self.config_file = self.config_folder / "config.ini"
         self.log_file = self.config_folder / "info.log"
         self.is_first_run= True
@@ -376,7 +376,7 @@ class Config:
                     self.DEFAULT_VIEW = AppState.HELP
                 elif opt in ('-v'):
                     self.DEFAULT_VIEW = AppState.EXIT
-                    print ('Calcure - version 3.2.1')
+                    print ('Cally - version 3.2.1')
                 elif opt in ('-i'):
                     self.USE_PERSIAN_CALENDAR = True
         except getopt.GetoptError as e_message:
