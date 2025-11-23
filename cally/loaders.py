@@ -34,9 +34,11 @@ class LoaderCSV:
             with open(filename, "r", encoding="utf-8") as file:
                 lines = csv.reader(file, delimiter = ',')
                 return list(lines)
-        except IOError: # File does not exist
-            # logging.info("Creating %s.", filename)
+        except FileNotFoundError:
             return self.create_file(filename)
+        except IOError as e:
+            logging.error(f"Failed to read {filename}: {e}")
+            return []
 
 
 class TaskLoaderCSV(LoaderCSV):
@@ -158,12 +160,32 @@ class EventLoaderCSV(LoaderCSV):
                 else:
                     status = Status.NORMAL
 
+                # Read time fields if they exist
+                hour = None
+                minute = None
+                end_hour = None
+                end_minute = None
+                
+                if len(row) > 8 and row[8]:
+                    try:
+                        hour = int(row[8])
+                        if len(row) > 9 and row[9]:
+                            minute = int(row[9])
+                        
+                        if len(row) > 10 and row[10]:
+                            end_hour = int(row[10])
+                            if len(row) > 11 and row[11]:
+                                end_minute = int(row[11])
+                    except ValueError:
+                        pass
+
                 # Convert to persian date if needed:
                 if self.use_persian_calendar:
                     year, month, day = convert_to_persian_date(year, month, day)
 
                 # Add event:
-                new_event = UserEvent(event_id, year, month, day, name, repetition, frequency, status, is_private)
+                new_event = UserEvent(event_id, year, month, day, name, repetition, frequency, status, is_private, 
+                                      hour=hour, minute=minute, end_hour=end_hour, end_minute=end_minute)
                 self.user_events.add_item(new_event)
                 parsed_count += 1
             except (ValueError, IndexError, KeyError) as e:

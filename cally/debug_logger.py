@@ -18,17 +18,16 @@ class DebugLogger:
             self.log_file = Path(log_file)
         self.logger = logging.getLogger('cally_debug')
         self.logger.setLevel(logging.DEBUG)
+        # Prevent propagation to root logger (which might have console handlers)
+        self.logger.propagate = False
         
         # Remove existing handlers
         self.logger.handlers = []
         
         # File handler
-        fh = logging.FileHandler(self.log_file, mode='w', encoding='utf-8')
+        # Use append mode to prevent truncation and potential file corruption
+        fh = logging.FileHandler(self.log_file, mode='a', encoding='utf-8')
         fh.setLevel(logging.DEBUG)
-        
-        # Console handler
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.WARNING)
         
         # Formatter
         formatter = logging.Formatter(
@@ -36,10 +35,8 @@ class DebugLogger:
             datefmt='%Y-%m-%d %H:%M:%S'
         )
         fh.setFormatter(formatter)
-        ch.setFormatter(formatter)
         
         self.logger.addHandler(fh)
-        self.logger.addHandler(ch)
         
         self.logger.info("=" * 80)
         self.logger.info("Cally Debug Log Started")

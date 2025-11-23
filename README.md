@@ -1,8 +1,8 @@
-# Calcure
+# Cally
 
 Modern TUI calendar and task manager with customizable interface. Manages your events and tasks, displays birthdays from your [abook](https://abook.sourceforge.io/), and can import events and tasks from [calcurse](https://github.com/lfos/calcurse). Now with **live data connectors** for real-time synchronization with external services like Notion.
 
-[See documentation](https://anufrievroman.gitbook.io/calcure/) for more information.
+[See documentation](https://anufrievroman.gitbook.io/cally/) for more information.
 
 ![screenshot](screenshot.png)
 
@@ -34,7 +34,7 @@ Modern TUI calendar and task manager with customizable interface. Manages your e
   - Filter tasks by assignee (e.g., "Ethan Hitchcock")
   - Automatic exclusion of completed tasks
   - Project-based task grouping with human-readable project names
-  - Status synchronization: changes in Calcure sync to Notion
+  - Status synchronization: changes in Cally sync to Notion
   - Change Notion task status via menu (`c` key)
   - Deleted tasks persist across restarts
 
@@ -68,7 +68,7 @@ Modern TUI calendar and task manager with customizable interface. Manages your e
 
 #### Debug & Logging
 - **Comprehensive Debug Logging**: 
-  - Verbose logging to `calcure_debug.log`
+  - Verbose logging to `Cally_debug.log`
   - ICS event loading details (every event logged)
   - Task load/save operations
   - Error tracking and crash reporting
@@ -85,27 +85,23 @@ Modern TUI calendar and task manager with customizable interface. Manages your e
 
 There are several ways to install:
 
-`pipx install calcure` - the up-to-date version from PyPi. You may need to install `pipx` first.
-
-`yay -S calcure` - [AUR package](https://aur.archlinux.org/packages/calcure) is available. Upvote to support the project!
-
-`calcure` is also available as NixOS package.
+`pipx install cally` - the up-to-date version from PyPi. You may need to install `pipx` first.
 
 ### Windows
 
 1. Install [Windows Terminal](https://apps.microsoft.com/detail/9n0dx20hk701?hl=en-US&gl=US) app from the Microsoft Store.
 2. Install [Python 3.x](https://apps.microsoft.com/search/publisher?name=Python+Software+Foundation&hl=en-us&gl=US) also from the Microsoft Store (if you just type `python` in the Windows Terminal app it will offer you to install)
-3. Install the program and libraries by typing in the Windows Terminal `pip install windows-curses calcure`
-4. Now you can finally run it by typing in the Windows Terminal `python -m calcure`
+3. Install the program and libraries by typing in the Windows Terminal `pip install windows-curses cally`
+4. Now you can finally run it by typing in the Windows Terminal `python -m cally`
 
 ### Upgrade to the most recent version
 
-`pipx upgrade calcure`
+`pipx upgrade cally`
 
 ### Dependencies
 
 - `python` 3.10 and higher (usually already installed)
-- `holidays`, `jdatetime`, and `icalendar` python libraries (should be installed automatically with the calcure)
+- `holidays`, `jdatetime`, and `icalendar` python libraries (should be installed automatically with the cally)
 - `windows-curses` on Windows
 - `requests` and `python-dotenv` for live data connectors (Notion integration)
 
@@ -113,7 +109,7 @@ There are several ways to install:
 
 ### Environment Variables (for Live Data Connectors)
 
-Create a `.env` file in the calcure directory with your API credentials:
+Create a `.env` file in the cally directory with your API credentials:
 
 ```bash
 # Notion Integration
@@ -124,11 +120,11 @@ NOTION_DATABASE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ### Settings
 
 [Example of config.ini file](https://anufrievroman.gitbook.io/calcure/default-config) and [explanations of all settings](https://anufrievroman.gitbook.io/calcure/settings) are available in the documentation.
-On the first run, program will create a `config.ini` file where you can edit parameters, colors, and icons at `~/.config/calcure/config.ini`.
+On the first run, program will create a `config.ini` file where you can edit parameters, colors, and icons at `~/.config/cally/config.ini`.
 
 ## Usage
 
-Run `calcure` in your terminal. You may need to restart your terminal after the install.
+Run `cally` in your terminal. You may need to restart your terminal after the install.
 
 ### Key Bindings
 
@@ -184,7 +180,7 @@ Run `calcure` in your terminal. You may need to restart your terminal after the 
 
 ### Notion Integration
 
-Calcure can sync tasks from Notion databases in real-time:
+Cally can sync tasks from Notion databases in real-time:
 
 1. **Setup**: 
    - Create a `.env` file with your Notion API key and database ID
@@ -215,7 +211,7 @@ Calcure can sync tasks from Notion databases in real-time:
 
 ### Debug Logging
 
-All operations are logged to `calcure_debug.log` in the calcure directory:
+All operations are logged to `cally_debug.log` in the cally directory:
 - Data loading (events, tasks, ICS calendars, Notion)
 - Task operations (create, delete, status changes)
 - Event operations
@@ -226,30 +222,21 @@ Check this file if you encounter issues or want to see what data is being loaded
 
 ### Setting daily reminders
 
-You can try [this project](https://github.com/sponkurtus2/calcxporte_r) to recieve daily reminders of events in your Calcure.
+You can try [this project](https://github.com/sponkurtus2/calcxporte_r) to recieve daily reminders of events in your Cally.
 
 ### Troubleshooting
 
 [Typical problems and solutions](https://anufrievroman.gitbook.io/calcure/troubleshooting) are described in documentation. If you faced a new problem, don't hesitate to open an issue.
 
 **Common Issues**:
-- **ICS events not showing**: Check `calcure_debug.log` for filtering details. Events are filtered by date - ensure you're viewing the correct month.
-- **Tasks not persisting**: Check `calcure_debug.log` for save/load operations. Ensure tasks are local (not Notion tasks) to be saved to CSV.
+- **ICS events not showing**: Check `cally_debug.log` for filtering details. Events are filtered by date - ensure you're viewing the correct month.
+- **Tasks not persisting**: Check `cally_debug.log` for save/load operations. Ensure tasks are local (not Notion tasks) to be saved to CSV.
 - **Notion tasks not loading**: Verify `.env` file has correct `NOTION_API_KEY` and `NOTION_DATABASE_ID`. Check debug log for API errors.
 
 ## Contribution
 
 [Full information about contribution](https://anufrievroman.gitbook.io/calcure/contribution) is available in the documentation.
 
-## Support
-
-I am not a professional developer and work on open-source projects in my free time. If you'd like to support the development, consider donations via [buymeacoffee](https://www.buymeacoffee.com/angryprofessor) or cryptocurrencies:
-
-- BTC `bc1qpkzmutdqfxkce34skt09vll97s5smpa0r2tyzj`
-- ETH `0x6f1Ce9cA181458Fc153a5f7cBF88044736C3b00C`
-- BNB `0x40f22c372758E35C905458cAF8BB17f51ac133d1`
-- LTC `ltc1qtu33qyv2xlzxda5mmrmk943zpksq8q75tuh85p`
-- XMR `4AHRhpNYUZcPVN78rbUWAzBuvMKQdpwStS5L3kjunnBMWWW2pjYBko1RUF6nQVpgQPdfAkM3jrEWrWKDHz1h4Ucd4gFCZ9j`
 
 ## Recent Changes
 

@@ -24,6 +24,9 @@ class Screen:
         self.reload_data = False
         self.is_reloading = False  # Flag for visual refresh indicator
         self.key = None
+        self.pending_action = None  # Store pending action (e.g. 'd') for two-step commands
+        self.selection_context = None # 'JOURNAL' or 'CALENDAR' to restrict selection numbers
+        self.timeout_counter = 0
         self.day = self.today.day
         self.month = self.today.month
         self.year = self.today.year

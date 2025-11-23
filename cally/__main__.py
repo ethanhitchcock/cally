@@ -280,9 +280,9 @@ class JournalView(View):
                 task_view = TaskView(self.stdscr, self.y, self.x, task, self.screen)
                 task_view.render()
                 # Always show task numbers in journal view when in selection mode
-                if self.screen.selection_mode and self.screen.state == AppState.JOURNAL:
+                if self.screen.selection_mode and (self.screen.state == AppState.JOURNAL or self.screen.selection_context == 'JOURNAL'):
                     # Display number at the start of the line (x position)
-                    self.display_line(self.y, self.x, str(task_index), Color.ACTIVE_PANE)
+                    self.display_line(self.y, self.x, str(task_index + 1), Color.ACTIVE_PANE)
                 self.y += 1
                 task_index += 1
         else:
@@ -321,9 +321,9 @@ class JournalView(View):
                 task_view = TaskView(self.stdscr, self.y, self.x, task, self.screen)
                 task_view.render()
                 # Always show task numbers in journal view when in selection mode
-                if self.screen.selection_mode and self.screen.state == AppState.JOURNAL:
+                if self.screen.selection_mode and (self.screen.state == AppState.JOURNAL or self.screen.selection_context == 'JOURNAL'):
                     # Display number at the start of the line (x position)
-                    self.display_line(self.y, self.x, str(task_index), Color.ACTIVE_PANE)
+                    self.display_line(self.y, self.x, str(task_index + 1), Color.ACTIVE_PANE)
                 self.y += 1
                 task_index += 1
         else:
@@ -554,7 +554,7 @@ class DailyView(View):
                 user_event_view.render()
 
                 # Only show numbers for events, not tasks (tasks are handled in JournalView)
-                if self.screen.selection_mode and self.is_selection_day and self.screen.state == AppState.CALENDAR:
+                if self.screen.selection_mode and self.is_selection_day and self.screen.state == AppState.CALENDAR and self.screen.selection_context != 'JOURNAL':
                     # Only show numbers for user events (not ICS events which are read-only)
                     if event in self.user_events.items:
                         self.display_line(self.y + index, self.x, str(index + self.index_offset + 1), Color.ACTIVE_PANE)
@@ -601,6 +601,93 @@ class DailyView(View):
                 index += 1
 
         self.num_events_this_day = index
+
+
+class WeeklyScreenView(View):
+    """Weekly view showing next 7 days of events"""
+
+    def __init__(self, stdscr, y, x, weather, user_events, user_ics_events, holidays, birthdays, user_tasks, user_ics_tasks, screen):
+        super().__init__(stdscr, y, x)
+        self.weather = weather
+        self.user_events = user_events
+        self.user_ics_events = user_ics_events
+        self.holidays = holidays
+        self.birthdays = birthdays
+        self.user_tasks = user_tasks
+        self.user_ics_tasks = user_ics_tasks
+        self.screen = screen
+
+    def render(self):
+        """Render weekly view showing next 7 days"""
+        self.screen.currently_drawn = AppState.CALENDAR
+        if self.screen.x_max < 6 or self.screen.y_max < 3:
+            return
+
+        calendar = Calendar(cf.START_WEEK_DAY - 1, cf.USE_PERSIAN_CALENDAR)
+
+        # Calculate current week start (Monday or Sunday based on START_WEEK_DAY)
+        current_date = self.screen.date
+        days_since_week_start = (current_date.weekday() - (cf.START_WEEK_DAY - 1)) % 7
+        week_start_date = current_date - datetime.timedelta(days=days_since_week_start)
+
+        # Calculate week number
+        week_num = calendar.week_number(week_start_date.year, week_start_date.month, week_start_date.day)
+
+        # Header with week number
+        month_names = MONTHS_PERSIAN if cf.USE_PERSIAN_CALENDAR else MONTHS
+        week_string = f"Week {week_num} - {month_names[week_start_date.month-1]} {week_start_date.year}"
+
+        header_view = HeaderView(self.stdscr, 0, 0, week_string, self.weather, self.screen)
+        header_view.render()
+
+        # Display day names header
+        day_names = DAYS_PERSIAN if cf.USE_PERSIAN_CALENDAR else DAYS
+        shift = cf.START_WEEK_DAY - 1
+        x_cell = self.screen.x_max // 7
+        for i in range(7):
+            day_number = (i + shift) % 7
+            day_name = day_names[day_number][:3]
+            x_pos = i * x_cell
+            color = Color.WEEKEND_NAMES if (day_number + 1) in cf.WEEKEND_DAYS else Color.DAY_NAMES
+            self.display_line(1, x_pos, day_name, color, cf.BOLD_DAY_NAMES)
+
+        # Display 7 days
+        repeated_user_events = RepeatedEvents(self.user_events, cf.USE_PERSIAN_CALENDAR, self.screen.year)
+        repeated_ics_events = RepeatedEvents(self.user_ics_events, cf.USE_PERSIAN_CALENDAR, self.screen.year)
+
+        y_start = 2
+
+        for day_idx in range(7):
+            x_pos = day_idx * x_cell
+
+            # Calculate date for this day
+            day_date = week_start_date + datetime.timedelta(days=day_idx)
+            day_color = Color.TODAY if day_date == self.screen.today else (Color.WEEKENDS if (day_date.weekday() + 1) in cf.WEEKEND_DAYS else Color.DAYS)
+
+            # Display date number with month/day format
+            date_str = f"{day_date.day}/{day_date.month}"
+            if day_date == self.screen.today:
+                date_str += cf.TODAY_ICON
+            self.display_line(y_start, x_pos, date_str, day_color, cf.BOLD_TODAY if day_date == self.screen.today else False)
+
+            # Temporarily set screen date for this day to render events correctly
+            temp_day = self.screen.day
+            temp_month = self.screen.month
+            temp_year = self.screen.year
+            self.screen.day = day_date.day
+            self.screen.month = day_date.month
+            self.screen.year = day_date.year
+
+            daily_view = DailyView(self.stdscr, y_start + 1, x_pos, repeated_user_events,
+                                   repeated_ics_events, self.user_events, self.user_ics_events,
+                                   self.holidays, self.birthdays, self.user_tasks, self.user_ics_tasks,
+                                   self.screen, 0, day_idx == 0)
+            daily_view.render()
+
+            # Restore original date
+            self.screen.day = temp_day
+            self.screen.month = temp_month
+            self.screen.year = temp_year
 
 
 class DayNumberView(View):
@@ -1379,6 +1466,9 @@ def main(stdscr) -> None:
             except:
                 pass
             
+            # Ensure tasks are sorted by type (Local then Notion) to match display indexing
+            user_tasks.sort_by_type()
+            
             stdscr.clear()
             app_view.fill_background()
 
@@ -1422,17 +1512,51 @@ def main(stdscr) -> None:
                     screen.key = None
                     continue
                 
+                # Handle pending journal actions (2-step commands like 'd' -> number)
+                journal_keys = ['t', 'T', 'h', 'l', 'v', 'u', 'i', 's', 'S', 'd', 'x', 'e', 'r', 'c', 'm', '.', 'f', 'F']
+                
+                if screen.selection_mode and screen.pending_action in journal_keys:
+                    # We are in the second step of a journal command
+                    # The current key is the argument (e.g. '1')
+                    # Push it back so the control function can read it via input_integer
+                    curses.ungetch(screen.key)
+                    
+                    # Restore the command key so the control function enters the correct block
+                    screen.key = screen.pending_action
+                    screen.selection_context = 'JOURNAL'
+                    
+                    control_journal_screen(stdscr, screen, user_tasks, importer, notion_saver)
+                    
+                    # Reset state after handling
+                    screen.pending_action = None
+                    screen.selection_mode = False
+                    screen.selection_context = None
+                    continue
+
                 # First check if it's a journal/task key (t, or task selection keys)
                 # If so, handle in journal screen only
-                journal_keys = ['t', 'T', 'h', 'l', 'v', 'u', 'i', 's', 'S', 'd', 'x', 'e', 'r', 'c', 'm', '.', 'f', 'F']
-                # Note: 'a' and 'A' are handled by calendar controls (a=event, A=recurring event)
                 is_journal_key = screen.key in journal_keys
                 
                 if is_journal_key:
                     # Handle journal/task keys
-                    control_journal_screen(stdscr, screen, user_tasks, importer, notion_saver)
+                    
+                    # Check if this key triggers selection mode (and requires 2 steps)
+                    selection_keys = ['d', 'v', 'x', 'h', 'i', 'l', 'u', 'e', 'r', 'c', 'm', 's', 'S', '.', 'f', 'F', 'T']
+                    
+                    if screen.key in selection_keys and not screen.selection_mode:
+                        # First step: Enable selection mode and show numbers
+                        screen.selection_mode = True
+                        screen.pending_action = screen.key
+                        screen.selection_context = 'JOURNAL'
+                        screen.refresh_now = True
+                        # Don't call control yet, wait for user to type number
+                    else:
+                        # Not a selection key (like 't') or already in selection mode
+                        screen.selection_context = 'JOURNAL'
+                        control_journal_screen(stdscr, screen, user_tasks, importer, notion_saver)
                 else:
                     # Handle calendar keys
+                    screen.selection_context = 'CALENDAR'
                     if screen.calendar_state == CalState.MONTHLY:
                         control_monthly_screen(stdscr, screen, user_events, importer)
                     elif screen.calendar_state == CalState.WEEKLY:

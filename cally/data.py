@@ -269,6 +269,20 @@ class Tasks(Collection):
                 return True
         return False
 
+    def sort_by_type(self):
+        """Sort tasks: Local tasks first (preserving order), then Notion tasks"""
+        local_tasks = []
+        notion_tasks = []
+        
+        for task in self.items:
+            if (hasattr(task, 'notion_id') and task.notion_id) or (hasattr(task, 'is_header') and task.is_header):
+                notion_tasks.append(task)
+            else:
+                local_tasks.append(task)
+        
+        # Reconstruct items list
+        self.items = local_tasks + notion_tasks
+
     def add_subtask(self, task, number):
         """Add a subtask for certain task in the journal"""
         level = '----'if (self.items[number].name[:2] == '--') else '--'
